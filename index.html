@@ -10,15 +10,34 @@
       href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Playfair+Display:wght@700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=5" />
+    <link rel="stylesheet" href="styles.css?v=11" />
     <style>
-      /* Inline override so this cannot be cached away. The subject card has
-         ring + name + fancier bold; color and notes are normal weight. */
+      /* Inline overrides so cache can't hide them. */
       .card.card-subject .ring,
       .card.card-subject .name,
       .card.card-subject .fancier { font-weight: 700 !important; }
       .card.card-subject .color,
       .card.card-subject .notes { font-weight: 400 !important; }
+
+      /* Header: crop top space, push logo + title down to the template line. */
+      .pedigree-page { padding-top: 0 !important; }
+      .page-head {
+        align-items: end !important;
+        padding-top: 0 !important;
+        margin-bottom: 2px !important;
+      }
+      .logo-slot {
+        height: 230px !important;
+        align-items: flex-end !important;
+      }
+      .logo-slot img {
+        max-height: 230px !important;
+        max-width: 300px !important;
+      }
+      .page-title {
+        margin: 0 0 4px !important;
+        padding-bottom: 4px !important;
+      }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

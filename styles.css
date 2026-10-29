@@ -345,7 +345,7 @@ small.hint {
   min-height: 1540px;
   background: #fff;
   color: #0a0a0a;
-  padding: 8px 24px 32px;
+  padding: 0 24px 32px;
   /* Monospace body — matches the typewriter look in the sample. */
   font-family: "Courier Prime", "Courier New", "Consolas", ui-monospace, monospace;
   font-size: 11px;
@@ -367,33 +367,31 @@ small.hint {
 .page-head {
   position: relative;
   display: grid;
-  grid-template-columns: 260px 1fr 260px;
-  align-items: center;
+  grid-template-columns: 320px 1fr 320px;
+  align-items: end;              /* logo + title both drop to the bottom edge */
   z-index: 1;
   padding-top: 0;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 .logo-slot {
   height: 200px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;         /* image sits at the bottom of its slot */
   justify-content: flex-start;
 }
 .logo-slot img {
   max-height: 200px;
-  max-width: 240px;
+  max-width: 280px;
   object-fit: contain;
 }
 .page-title {
-  margin: 0;
+  margin: 0 0 10px;
   text-align: center;
   font-size: 24px;
   font-weight: 700;
   /* Plain, clean type — no decorative face. */
   font-family: Arial, "Helvetica Neue", Helvetica, system-ui, sans-serif;
   color: #000;
-  /* Nudge only the title down without displacing the template image. */
-  transform: translateY(40px);
 }
 
 /* ------------------------------ Tree --------------------------------- */
