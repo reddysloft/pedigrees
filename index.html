@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pedigree Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Playfair+Display:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=5" />
+    <style>
+      /* Inline override so this cannot be cached away. The subject card has
+         ring + name + fancier bold; color and notes are normal weight. */
+      .card.card-subject .ring,
+      .card.card-subject .name,
+      .card.card-subject .fancier { font-weight: 700 !important; }
+      .card.card-subject .color,
+      .card.card-subject .notes { font-weight: 400 !important; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <header class="brand">
+        <div class="brand-mark">P</div>
+        <div>
+          <div class="brand-title">Pedigree Generator</div>
+          <div class="brand-sub">Pigeon racing lofts</div>
+        </div>
+      </header>
+
+      <nav class="tabs">
+        <button class="tab active" data-tab="loft">Loft</button>
+        <button class="tab" data-tab="subject">Subject</button>
+        <button class="tab" data-tab="father">Father</button>
+        <button class="tab" data-tab="mother">Mother</button>
+      </nav>
+
+      <section class="pane active" data-pane="loft">
+        <h3>Template Style</h3>
+        <div class="template-chooser">
+          <label class="template-option">
+            <input type="radio" name="template" value="template1" data-field="template" checked />
+            <img class="template-thumb" src="assets/template1.png" alt="Template 1" />
+            <span>Template 1</span>
+          </label>
+          <label class="template-option">
+            <input type="radio" name="template" value="template2" data-field="template" />
+            <img class="template-thumb" src="assets/template2.png" alt="Template 2" />
+            <span>Template 2</span>
+          </label>
+        </div>
+
+        <h3>Loft & Fancier</h3>
+        <label>Fancier / Loft name
+          <input type="text" data-field="loft.name" placeholder="ROY'S LOFT" />
+        </label>
+        <label>Address
+          <textarea data-field="loft.address" rows="3" placeholder="KS Siddartha Roy&#10;Kolar, Karnataka"></textarea>
+        </label>
+        <label>Contact
+          <input type="text" data-field="loft.contact" placeholder="9980038809" />
+        </label>
+        <label>Logo
+          <input type="file" accept="image/*" data-upload="logo" />
+          <small class="hint">Shown top-left and as a 10% watermark.</small>
+        </label>
+        <div class="logo-preview" id="logoPreview"></div>
+
+        <h3>Card Highlights</h3>
+        <small class="hint">Click any card in the preview to pick a highlight color.</small>
+        <button id="clearColors" class="small-btn" type="button">Clear all highlights</button>
+
+        <h3>Image auto-fill</h3>
+        <small class="hint">
+          Uploading a parent pedigree as JPG/PNG triggers OCR to extract the
+          text and fill the fields automatically. A free in-browser engine
+          runs by default (slower, lower accuracy).
+        </small>
+        <label style="margin-top:10px">Gemini API key (optional, more accurate)
+          <input type="password" id="aiKey" placeholder="AIzaSy..." autocomplete="off" />
+          <small class="hint">
+            Stored only in your browser. <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Get a free key</a>.
+          </small>
+        </label>
+      </section>
+
+      <section class="pane" data-pane="subject">
+        <h3>Subject Bird</h3>
+        <label>Ring number
+          <input type="text" data-field="subject.ring" placeholder="KLRPC 25-1188" />
+        </label>
+        <label>Bird name
+          <input type="text" data-field="subject.name" placeholder="DE 188" />
+        </label>
+        <label>Fancier name
+          <input type="text" data-field="subject.fancier" placeholder="breeder / owner" />
+        </label>
+        <label>Color
+          <input type="text" data-field="subject.color" placeholder="GRIZZLE" />
+        </label>
+        <label>Gender
+          <select data-field="subject.gender">
+            <option value="">—</option>
+            <option value="Cock">Cock</option>
+            <option value="Hen">Hen</option>
+          </select>
+        </label>
+        <label>Notes
+          <textarea data-field="subject.notes" rows="6" placeholder="Elite pedigree featuring Jos Thoné lines..."></textarea>
+        </label>
+      </section>
+
+      <section class="pane" data-pane="father">
+        <h3>Father</h3>
+        <div class="upload-row">
+          <label class="upload-btn">
+            <input type="file" accept="application/json,.json" data-upload="fatherJson" hidden />
+            <span>Pedigree data (.json)</span>
+          </label>
+          <label class="upload-btn secondary">
+            <input type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" data-upload="fatherImage" hidden />
+            <span>Pedigree image (JPG / PNG)</span>
+          </label>
+        </div>
+        <small class="hint">After uploading an image, type each bird's ring number below and press "Match &amp; fill".</small>
+        <div class="ref-preview" id="fatherRef"></div>
+
+        <div class="match-panel" id="fatherMatchPanel" hidden>
+          <h4>Match by ring number</h4>
+          <label>Father
+            <input type="text" class="match-ring" data-match-side="father" data-match-slot="subject" placeholder="e.g. BE 18-5025989" />
+          </label>
+          <label>Grandfather
+            <input type="text" class="match-ring" data-match-side="father" data-match-slot="father" placeholder="paternal grandfather" />
+          </label>
+          <label>Grandmother
+            <input type="text" class="match-ring" data-match-side="father" data-match-slot="mother" placeholder="paternal grandmother" />
+          </label>
+          <label>Great-grandfather (father side)
+            <input type="text" class="match-ring" data-match-side="father" data-match-slot="gp_ff" />
+          </label>
+          <label>Great-grandmother (father side)
+            <input type="text" class="match-ring" data-match-side="father" data-match-slot="gp_fm" />
+          </label>
+          <label>Great-grandfather (mother side)
+            <input type="text" class="match-ring" data-match-side="father" data-match-slot="gp_mf" />
+          </label>
+          <label>Great-grandmother (mother side)
+            <input type="text" class="match-ring" data-match-side="father" data-match-slot="gp_mm" />
+          </label>
+          <button type="button" class="match-fill-btn" data-match-side="father">Match &amp; fill</button>
+        </div>
+      </section>
+
+      <section class="pane" data-pane="mother">
+        <h3>Mother</h3>
+        <div class="upload-row">
+          <label class="upload-btn">
+            <input type="file" accept="application/json,.json" data-upload="motherJson" hidden />
+            <span>Pedigree data (.json)</span>
+          </label>
+          <label class="upload-btn secondary">
+            <input type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" data-upload="motherImage" hidden />
+            <span>Pedigree image (JPG / PNG)</span>
+          </label>
+        </div>
+        <small class="hint">After uploading an image, type each bird's ring number below and press "Match &amp; fill".</small>
+        <div class="ref-preview" id="motherRef"></div>
+
+        <div class="match-panel" id="motherMatchPanel" hidden>
+          <h4>Match by ring number</h4>
+          <label>Mother
+            <input type="text" class="match-ring" data-match-side="mother" data-match-slot="subject" placeholder="e.g. BE 15-2182681" />
+          </label>
+          <label>Grandfather
+            <input type="text" class="match-ring" data-match-side="mother" data-match-slot="father" placeholder="maternal grandfather" />
+          </label>
+          <label>Grandmother
+            <input type="text" class="match-ring" data-match-side="mother" data-match-slot="mother" placeholder="maternal grandmother" />
+          </label>
+          <label>Great-grandfather (father side)
+            <input type="text" class="match-ring" data-match-side="mother" data-match-slot="gp_ff" />
+          </label>
+          <label>Great-grandmother (father side)
+            <input type="text" class="match-ring" data-match-side="mother" data-match-slot="gp_fm" />
+          </label>
+          <label>Great-grandfather (mother side)
+            <input type="text" class="match-ring" data-match-side="mother" data-match-slot="gp_mf" />
+          </label>
+          <label>Great-grandmother (mother side)
+            <input type="text" class="match-ring" data-match-side="mother" data-match-slot="gp_mm" />
+          </label>
+          <button type="button" class="match-fill-btn" data-match-side="mother">Match &amp; fill</button>
+        </div>
+      </section>
+
+      <footer class="actions">
+        <button id="exportPng">Export PNG</button>
+        <button id="exportPdf">Export PDF</button>
+        <button id="exportJson" class="ghost">Export JSON</button>
+        <button id="importJson" class="ghost">Import JSON</button>
+        <input type="file" id="importJsonInput" accept="application/json" hidden />
+        <button id="resetAll" class="ghost danger">Reset</button>
+      </footer>
+    </aside>
+
+    <main class="stage">
+      <div class="stage-inner">
+        <div class="pedigree-page" id="page">
+          <div class="watermark" id="watermark"></div>
+          <div class="page-head">
+            <div class="logo-slot" id="logoSlot"></div>
+            <h1 class="page-title" id="pageTitle">Pedigree Pigeon:</h1>
+            <div class="head-spacer"></div>
+          </div>
+
+          <div class="template-wrap" id="templateWrap">
+            <img class="template-bg" id="templateBg" src="assets/template1.png" alt="pedigree template" />
+            <div class="template-cards" id="templateCards"></div>
+          </div>
+
+          <div class="loft-card" id="loftCard">
+            <div class="loft-title" id="loftTitle">ROY'S LOFT</div>
+            <div class="loft-address" id="loftAddress"></div>
+            <div class="loft-contact" id="loftContact"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div class="color-popover" id="colorPopover" hidden>
+      <div class="popover-head">Highlight card</div>
+      <div class="swatches">
+        <button class="swatch clear" type="button" data-color="" title="Clear color"></button>
+        <button class="swatch" type="button" data-color="#f5c8cb" style="background:#f5c8cb" title="Pink"></button>
+        <button class="swatch" type="button" data-color="#cfe9c9" style="background:#cfe9c9" title="Green"></button>
+        <button class="swatch" type="button" data-color="#c9d6f0" style="background:#c9d6f0" title="Blue"></button>
+        <button class="swatch" type="button" data-color="#fff2b3" style="background:#fff2b3" title="Yellow"></button>
+        <button class="swatch" type="button" data-color="#ffd9b3" style="background:#ffd9b3" title="Peach"></button>
+        <button class="swatch" type="button" data-color="#e5d5f5" style="background:#e5d5f5" title="Lavender"></button>
+        <label class="swatch custom" title="Custom color">
+          <input type="color" id="colorPopoverCustom" value="#f5c8cb" />
+        </label>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

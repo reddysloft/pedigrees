@@ -1,0 +1,18 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Python (for the template-generator script in tools/)
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Local server logs or notes
+*.log
+.scratch
